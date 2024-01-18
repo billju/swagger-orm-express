@@ -1,10 +1,14 @@
 const express = require('express');
 const swaggerUi = require('swagger-ui-express');
 class Swagger {
-    express = express(); typedef = {}; _pipes = []; _query = []; _tags = [];
+    express = express();
+    typedef = {};
+    _pipes = [];
+    _query = [];
+    _tags = [];
     doc = { openapi: '3.0.0', info: { title: 'swagger-orm-express' }, paths: {}, components: { schemas: {} } };
     findRef(value = {}) {
-        const name = Object.keys(this.typedef).find(x => (Array.isArray(value) ? value.type : value) instanceof this.typedef[x]);
+        const name = Object.keys(this.typedef).find((x) => (Array.isArray(value) ? value.type : value) instanceof this.typedef[x]);
         return name && '#/components/schemas/' + name;
     }
     createSchema(schema = {}) {
@@ -25,33 +29,64 @@ class Swagger {
         // { allOf: { $ref: '#/components/schemas/' + extend }, properties };
         return { properties };
     }
-    use(...args) { this.express.use(...args); return this; }
-    set(...args) { this.express.set(...args); return this; }
-    listen(...args) { this.express.listen(...args); return this; }
-    get(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'get', _url, _pipes }); }
-    post(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'post', _url, _pipes }); }
-    put(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'put', _url, _pipes }); }
-    delete(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'delete', _url, _pipes }); }
-    patch(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'patch', _url, _pipes }); }
-    head(_url, ..._pipes) { return Object.assign(this.next(), { _method: 'head', _url, _pipes }); }
-    query(..._query) { return Object.assign(this, { _query }); }
-    body(_body) { return Object.assign(this, { _body }); }
-    ok(_ok) { return Object.assign(this, { _ok }); }
-    tag(..._tags) { return Object.assign(this, { _tags }); }
-    summary(_summary) { return Object.assign(this, { _summary }); }
-    description(_description) { return Object.assign(this, { _description }); }
+    use(...args) {
+        this.express.use(...args);
+        return this;
+    }
+    set(...args) {
+        this.express.set(...args);
+        return this;
+    }
+    listen(...args) {
+        this.express.listen(...args);
+        return this;
+    }
+    get(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'get', _url, _pipes });
+    }
+    post(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'post', _url, _pipes });
+    }
+    put(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'put', _url, _pipes });
+    }
+    delete(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'delete', _url, _pipes });
+    }
+    patch(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'patch', _url, _pipes });
+    }
+    head(_url, ..._pipes) {
+        return Object.assign(this.next(), { _method: 'head', _url, _pipes });
+    }
+    query(..._query) {
+        return Object.assign(this, { _query });
+    }
+    body(_body) {
+        return Object.assign(this, { _body });
+    }
+    ok(_ok) {
+        return Object.assign(this, { _ok });
+    }
+    tag(..._tags) {
+        return Object.assign(this, { _tags });
+    }
+    summary(_summary) {
+        return Object.assign(this, { _summary });
+    }
+    description(_description) {
+        return Object.assign(this, { _description });
+    }
     next() {
         const { doc, _method, _pipes, _url, _query, _body, _ok, _tags, _summary, _description } = this;
         if (!_method) return this;
-        const _path = (_url.match(/:\w+/g) || []).map(x => x.replace(':', ''));
-        const parameters = [
-            ..._path.map(name => ({ name, in: 'path', required: true })),
-            ..._query.map(name => ({ name, in: 'query' })),
-        ];
+        const _path = (_url.match(/:\w+/g) || []).map((x) => x.replace(':', ''));
+        const parameters = [..._path.map((name) => ({ name, in: 'path', required: true })), ..._query.map((name) => ({ name, in: 'query' }))];
         const router = { tags: _tags, parameters, summary: _summary, description: _description, operationId: this._pipes[this._pipes.length - 1]?.name || '' };
-        const mime = 'application/json';
-        if (_body) router.requestBody = { content: { [mime]: { schema: this.createSchema(_body) } } };
-        if (_ok) router.responses = { 200: { content: { [mime]: { schema: this.createSchema(_ok) } } } };
+        if (_body) router.requestBody = _body == File ? 
+            { require:true, content: { 'multipart/form-data': { schema: { type: 'object', properties: { file: { type:'string',format:'binary' } } } } } } : 
+            { content: { 'application/json': { schema: this.createSchema(_body) } } };
+        if (_ok) router.responses = { 200: { content: { 'application/json': { schema: this.createSchema(_ok) } } } };
         const pathname = _url.replace(/:(\w+)/g, '{$1}');
         if (doc.paths[pathname]) doc.paths[pathname][_method] = router;
         else doc.paths[pathname] = { [_method]: router };

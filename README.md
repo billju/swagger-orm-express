@@ -23,9 +23,10 @@ class Pet extends ORM {
 
 connect to your database and insert a record (remember to install better-sqlite3 first)
 ```js
-var db;
-ORM.connect({ driver: 'better-sqlite3', database: 'ORM.sqlite' }).then(con=>db=con);
-new Pet().set({id:1,name:'cat'}).insert(db);
+const db = ORM.Client();
+db.connect({ driver: 'better-sqlite3', database: 'ORM.sqlite' }).then(async ()=>{
+    await new Pet().set({id:1,name:'cat'}).insert(db);
+})
 ```
 
 create your server
